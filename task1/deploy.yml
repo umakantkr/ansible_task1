@@ -1,0 +1,66 @@
+#Step1: Select Managed Node host Ip.
+#-----------------------------------
+- hosts: 192.168.217.145
+  tasks:
+#Step2: Configuring YUM to install Docker Software.
+#-------------------------------------------------
+  - name: Configuring YUM
+    yum_repository:
+     name: docker
+     description: Configuring YUM for Docker
+     baseurl: https://download.docker.com/linux/centos/7/x86_64/stable/
+     gpgcheck: no
+     enabled: true 
+#Step3: Install Python because Ansible is based on Python.
+#--------------------------------------------------------
+  - name: Install Python3
+    package: 
+     name: python36
+     state: present 
+#Step4: Python provide pip which is used to install Docker-py to run docker commands
+#--------------------------------------------------------------------------
+  - name: Install Docker-py using pip 
+    pip:
+     name: docker-py
+#Step5: Installing Docker on ReadHat8 Os 
+#---------------------------------------
+  - name: Install Docker on RedHat
+    command: "yum install docker-ce --nobest -y"
+    when: ansible_os_family == "RedHat"
+#Step6: Starting Docker Services
+#-------------------------------
+  - name: Start Docker Service
+    service:
+     name: docker
+     state: started
+#Step7: Creating Directory for Website
+#-------------------------------------
+  - name: Creating Folder in Managed Node
+    file:
+     path: /root/Website
+     state: directory
+#Step8: Copying website from comtroller node to managed node
+#-----------------------------------------------------------
+  - name: Copying website from Controller Node to Managed Node
+    copy:
+     src: "index.html" 
+     dest: "/root/Website"
+    ignore_errors: yes
+#Step9: Pull Httpd Image from dockerHub
+#-------------------------------------- 
+  - name: Pull Docker Httpd Image
+    docker_image:
+     name: httpd
+     source: pull
+#Step10: Creating Docker Container with webserver enable and exposing the container at port no 8080.
+#------------------------------------------------------------------------
+  - name: Creating Docker Container
+    docker_container:
+     name: mywebserveros
+     image: httpd
+     state: started
+     detach: true
+     interactive: true
+     ports:
+     - "8080:80"
+     volumes:
